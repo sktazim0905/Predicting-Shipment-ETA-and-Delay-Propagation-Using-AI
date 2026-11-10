@@ -1,0 +1,2 @@
+# Frozen generated artifacts: store byte-for-byte so their SHA-256 hashes match on every platform.
+data/** -text

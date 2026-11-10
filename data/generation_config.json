@@ -1,0 +1,433 @@
+{
+  "notes": {
+    "status": "All values are synthetic assumptions, not verified maritime schedules or operational statistics.",
+    "ports": "Port names are labels only.",
+    "units": "Durations in hours unless suffixed otherwise; timestamps stored and computed in UTC.",
+    "checkpoint": "T1 = actual destination-port arrival. Upstream timestamps are built backwards from T1.",
+    "customs_calendar": "Synthetic rule: customs processing may only start Mon-Fri at or after 08:00 destination-local time; public holidays are ignored.",
+    "truck_slot": "planned_truck_slot = P3 (planned customs release). Lateness L = T3 - P3 is measured against this appointment.",
+    "truck_slot_availability": "Congestion-dependent stochastic truck-slot availability (synthetic approximation). Pickup windows of slot_window_h hours start at P3; window 0 is the booked window. If L < window, wait = 0. Otherwise j = floor(L / window); N consecutive windows starting with window j are unavailable, with q = clip(q_max - kappa * congestion_dwell, q_min, q_max) and N = min(N_max, floor(ln u / ln(1 - q))), u ~ U(0,1]. N = 0 gives wait 0, otherwise wait = (j + N) * window - L. After N_max skipped windows the next window is treated as available, so wait <= N_max * window. Availability is sampled independently per shipment: there is no shared capacity or competition between shipments.",
+    "truck_slot_expected_wait": "Capped geometric: E[N] = sum_{k=1..N_max} (1-q)^k. At L = window, E[wait] = window * E[N]. Theoretical E[wait] at L = window: q=0.90 -> 0.67h, q=0.72 -> 2.33h, q=0.54 -> 5.10h,q=0.36 -> 10.37h, q=0.30 -> 13.19h. These are properties of the mechanism, not dataset targets.",
+    "truck_slot_change_log": "Replaces an earlier fixed rebooking jump of U(12,36)*(1+congestion) whenever L > 6h, which produced a structural gap in final delay. The new mechanism is not tuned to any model metric or delay distribution.",
+    "early_pickup": "Cargo ready before its planned truck slot may be collected early (deliberate simplification).",
+    "seasonality": "Only destination congestion and destination weather are seasonal, keyed to T1's destination-local month.",
+    "missingness": "MCAR, applied after ground truth. Masked actual departures leave P0, P1, T1 and arrival_delay_h observable."
+  },
+  "config": {
+    "seed": 42,
+    "rng_streams": [
+      "t1_allocation",
+      "shipment_context",
+      "upstream",
+      "downstream",
+      "missingness"
+    ],
+    "period_utc": {
+      "start": "2024-01-01T00:00:00+00:00",
+      "end": "2026-01-01T00:00:00+00:00"
+    },
+    "allocation": {
+      "train_period": [
+        "2024-01-01T00:00:00+00:00",
+        "2025-01-01T00:00:00+00:00"
+      ],
+      "test_windows": [
+        [
+          "2025-01-01T00:00:00+00:00",
+          "2025-05-01T00:00:00+00:00"
+        ],
+        [
+          "2025-05-01T00:00:00+00:00",
+          "2025-09-01T00:00:00+00:00"
+        ],
+        [
+          "2025-09-01T00:00:00+00:00",
+          "2026-01-01T00:00:00+00:00"
+        ]
+      ],
+      "per_route_per_window": 7,
+      "t1_floor": "minute"
+    },
+    "routes": [
+      {
+        "id": "R1",
+        "origin": "Mumbai",
+        "destination": "Rotterdam",
+        "distance_km": 10500,
+        "planned_transit_h": 528,
+        "records": 42,
+        "chokepoint": true
+      },
+      {
+        "id": "R2",
+        "origin": "Shanghai",
+        "destination": "Los Angeles",
+        "distance_km": 10500,
+        "planned_transit_h": 432,
+        "records": 42,
+        "chokepoint": false
+      },
+      {
+        "id": "R3",
+        "origin": "Singapore",
+        "destination": "Hamburg",
+        "distance_km": 15500,
+        "planned_transit_h": 672,
+        "records": 42,
+        "chokepoint": true
+      },
+      {
+        "id": "R4",
+        "origin": "Chennai",
+        "destination": "Dubai",
+        "distance_km": 3000,
+        "planned_transit_h": 216,
+        "records": 42,
+        "chokepoint": false
+      },
+      {
+        "id": "R5",
+        "origin": "Shenzhen",
+        "destination": "New York",
+        "distance_km": 19000,
+        "planned_transit_h": 840,
+        "records": 41,
+        "chokepoint": true
+      },
+      {
+        "id": "R6",
+        "origin": "Mumbai",
+        "destination": "Singapore",
+        "distance_km": 4000,
+        "planned_transit_h": 288,
+        "records": 41,
+        "chokepoint": false
+      }
+    ],
+    "destinations": {
+      "Rotterdam": {
+        "tz": "Europe/Amsterdam",
+        "base_congestion": 0.4,
+        "planned_dwell_h": 60,
+        "winter_weather": true,
+        "inland_km": [
+          50,
+          400
+        ]
+      },
+      "Los Angeles": {
+        "tz": "America/Los_Angeles",
+        "base_congestion": 0.55,
+        "planned_dwell_h": 72,
+        "winter_weather": false,
+        "inland_km": [
+          30,
+          600
+        ]
+      },
+      "Hamburg": {
+        "tz": "Europe/Berlin",
+        "base_congestion": 0.45,
+        "planned_dwell_h": 60,
+        "winter_weather": true,
+        "inland_km": [
+          50,
+          500
+        ]
+      },
+      "Dubai": {
+        "tz": "Asia/Dubai",
+        "base_congestion": 0.35,
+        "planned_dwell_h": 48,
+        "winter_weather": false,
+        "inland_km": [
+          20,
+          250
+        ]
+      },
+      "New York": {
+        "tz": "America/New_York",
+        "base_congestion": 0.5,
+        "planned_dwell_h": 72,
+        "winter_weather": true,
+        "inland_km": [
+          30,
+          450
+        ]
+      },
+      "Singapore": {
+        "tz": "Asia/Singapore",
+        "base_congestion": 0.3,
+        "planned_dwell_h": 36,
+        "winter_weather": false,
+        "inland_km": [
+          10,
+          60
+        ]
+      }
+    },
+    "calendar": {
+      "non_working_weekdays": [
+        5,
+        6
+      ],
+      "workday_start_hour": 8
+    },
+    "ocean": {
+      "min_frac_of_planned": 0.85,
+      "sigma_frac": 0.025,
+      "slack_frac": 0.03,
+      "recovery_fraction": [
+        0.2,
+        0.6
+      ],
+      "weather_coef_h": 36,
+      "disruption_prob": 0.04,
+      "disruption_h": [
+        24,
+        120
+      ]
+    },
+    "departure": {
+      "noise_sd_h": 3,
+      "congestion_coef_h": 24,
+      "weather_threshold": 0.7,
+      "weather_delay_h": [
+        6,
+        24
+      ],
+      "carrier_exp_scale_h": 6,
+      "min_h": -6
+    },
+    "carriers": {
+      "Carrier A": {
+        "share": 0.35,
+        "k": 0.5
+      },
+      "Carrier B": {
+        "share": 0.3,
+        "k": 1.0
+      },
+      "Carrier C": {
+        "share": 0.2,
+        "k": 1.5
+      },
+      "Carrier D": {
+        "share": 0.15,
+        "k": 2.0
+      }
+    },
+    "factors": {
+      "origin_congestion_beta": [
+        2,
+        5
+      ],
+      "origin_weather_beta": [
+        2,
+        4
+      ],
+      "enroute_weather_beta": [
+        2,
+        5
+      ],
+      "dest_weather_beta": [
+        2,
+        5
+      ],
+      "dest_weather_winter_amp": 0.08,
+      "dest_weather_mean_ref": 0.3,
+      "congestion_season_amp": 0.1,
+      "congestion_peak_month": 9,
+      "congestion_noise_sd": 0.08,
+      "disruption_bunching": 0.15,
+      "dwell_drift_sd": 0.1
+    },
+    "port": {
+      "min_h": 6,
+      "dwell_multiplier": [
+        0.85,
+        1.15
+      ],
+      "berth_tolerance_h": 12,
+      "missed_berth_gamma_shape": 2,
+      "missed_berth_scale_h": 6,
+      "missed_berth_congestion_mult": 3,
+      "on_time_berth_exp_scale_h": 4,
+      "early_absorption_frac": 0.5,
+      "early_grace_h": 6,
+      "congestion_handling_coef": 0.8,
+      "weather_handling_coef": 0.3,
+      "noise_frac": 0.1,
+      "storm_threshold": 0.75,
+      "storm_delay_h": [
+        12,
+        36
+      ]
+    },
+    "cargo": {
+      "mix": {
+        "general": 0.55,
+        "reefer": 0.15,
+        "hazardous": 0.1,
+        "high_value": 0.2
+      },
+      "planned_customs_processing_h": {
+        "general": 24,
+        "reefer": 12,
+        "hazardous": 36,
+        "high_value": 30
+      }
+    },
+    "customs": {
+      "min_processing_h": 2,
+      "docs_complete_prob": 0.85,
+      "inspection_intercept": -2.44,
+      "inspection_cargo_coef": {
+        "general": 0.0,
+        "reefer": -0.4,
+        "hazardous": 1.0,
+        "high_value": 0.7
+      },
+      "inspection_docs_coef": 1.2,
+      "inspection_gamma": [
+        2,
+        18
+      ],
+      "incomplete_docs_h": [
+        12,
+        48
+      ],
+      "congestion_coef": 0.3,
+      "noise_frac": 0.15
+    },
+    "inland": {
+      "planning_speed_kmh": 50,
+      "min_speed_kmh": 60,
+      "min_handling_h": 1,
+      "handling_allowance_h": [
+        4,
+        10
+      ],
+      "buffer_frac": 0.15,
+      "recovery_fraction": [
+        0.3,
+        0.7
+      ],
+      "noise_frac_of_drive": 0.1,
+      "slot_window_h": 6,
+      "slot_availability_max": 0.9,
+      "slot_availability_congestion_coef": 0.6,
+      "slot_availability_min": 0.3,
+      "max_windows_skipped": 8
+    },
+    "missingness": {
+      "dest_congestion_obs": 0.1,
+      "actual_departure": 0.08
+    },
+    "reporting": {
+      "delayed_threshold_h": 24
+    }
+  },
+  "schema": {
+    "id_meta": [
+      "shipment_id",
+      "route_id",
+      "validation_window"
+    ],
+    "context": [
+      "origin_port",
+      "destination_port",
+      "dest_timezone",
+      "carrier",
+      "cargo_type",
+      "documentation_complete",
+      "route_distance_km",
+      "has_chokepoint",
+      "inland_distance_km"
+    ],
+    "plan": [
+      "scheduled_departure",
+      "scheduled_port_arrival",
+      "planned_port_exit",
+      "planned_customs_release",
+      "scheduled_delivery",
+      "planned_transit_h",
+      "planned_port_dwell_h",
+      "planned_customs_processing_h",
+      "planned_customs_wait_h",
+      "planned_customs_h",
+      "planned_inland_h"
+    ],
+    "observed_at_checkpoint": [
+      "actual_departure",
+      "actual_port_arrival",
+      "departure_delay_h",
+      "ocean_transit_delay_h",
+      "arrival_delay_h",
+      "origin_congestion_index",
+      "origin_weather_severity",
+      "enroute_weather_severity",
+      "chokepoint_disruption",
+      "dest_congestion_index",
+      "dest_weather_severity",
+      "projected_nonworking_wait_h"
+    ],
+    "post_checkpoint_outcomes": [
+      "actual_port_exit",
+      "actual_customs_processing_start",
+      "actual_customs_release",
+      "actual_delivery",
+      "actual_customs_wait_h",
+      "customs_inspection",
+      "booked_window_missed",
+      "port_processing_delay_h",
+      "customs_delay_h",
+      "inland_delivery_delay_h"
+    ],
+    "targets": [
+      "downstream_delay_h",
+      "final_delivery_delay_h",
+      "is_delayed_24h"
+    ],
+    "latent_audit_only": [
+      "_latent_actual_departure",
+      "_latent_departure_delay_h",
+      "_latent_ocean_transit_delay_h",
+      "_latent_dest_congestion_true",
+      "_latent_congestion_dwell",
+      "_latent_missed_berth_window",
+      "_latent_berth_wait_h",
+      "_latent_early_absorption_h",
+      "_latent_storm_closure_h",
+      "_latent_ocean_recovery_h",
+      "_latent_truck_wait_h",
+      "_latent_windows_skipped",
+      "_latent_slot_availability",
+      "_latent_inland_recovery_h"
+    ],
+    "model_features_numeric": [
+      "arrival_delay_h",
+      "dest_congestion_index",
+      "dest_weather_severity",
+      "planned_port_dwell_h",
+      "projected_nonworking_wait_h",
+      "inland_distance_km",
+      "planned_inland_h",
+      "documentation_complete"
+    ],
+    "model_features_categorical": [
+      "destination_port",
+      "cargo_type"
+    ],
+    "ablation_only_features": [
+      "carrier"
+    ],
+    "model_target": [
+      "downstream_delay_h"
+    ]
+  },
+  "output": {
+    "rows": 250,
+    "csv": "shipments.csv"
+  }
+}
