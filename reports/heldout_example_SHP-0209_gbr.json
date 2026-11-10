@@ -1,0 +1,68 @@
+{
+  "result": {
+    "shipment_id": "SHP-0209",
+    "model_name": "gbr",
+    "destination_port": "Singapore",
+    "destination_timezone": "Asia/Singapore",
+    "arrival_delay_h": 9.47268530361111,
+    "predicted_downstream_delay_h": 14.048457554665248,
+    "predicted_final_delay_h": 23.521142858276356,
+    "scheduled_delivery_utc": "2025-09-05T21:18:40.927007+00:00",
+    "predicted_eta_utc": "2025-09-06T20:49:57.041297+00:00",
+    "predicted_eta_local": "2025-09-07T04:49+08:00",
+    "shap_base_value_h": 21.94711525396255,
+    "feature_contributions_h": {
+      "num__arrival_delay_h": -6.571847324593661,
+      "num__dest_congestion_index": 5.806022938089579,
+      "num__dest_weather_severity": 0.5453550965270677,
+      "num__planned_port_dwell_h": -5.343727954011606,
+      "num__projected_nonworking_wait_h": 0.1756387426672318,
+      "num__inland_distance_km": 2.1796391177724717,
+      "num__planned_inland_h": 3.246706365072865,
+      "num__documentation_complete": -7.174704388823706,
+      "num__missingindicator_dest_congestion_index": 0.02051351872208453,
+      "cat__destination_port_Dubai": -0.016120268114590316,
+      "cat__destination_port_Hamburg": 0.39692133109684746,
+      "cat__destination_port_Los Angeles": -0.38753446582333545,
+      "cat__destination_port_New York": 0.021845522492215923,
+      "cat__destination_port_Rotterdam": -0.31476889656577856,
+      "cat__destination_port_Singapore": 0.0,
+      "cat__cargo_type_general": -0.049895580000125776,
+      "cat__cargo_type_hazardous": 0.4362064867120239,
+      "cat__cargo_type_high_value": -0.8735677300592382,
+      "cat__cargo_type_reefer": 0.004659789542327981
+    },
+    "group_contributions_h": {
+      "upstream_propagation": -6.571847324593661,
+      "port_conditions": 1.203802341994357,
+      "customs_risk": -7.657301422628718,
+      "inland_delivery": 5.426345482845337,
+      "destination_context": -0.29965677691464093
+    },
+    "model_scope": "fold-3 evaluation model, HELD-OUT: this shipment is not in its training rows",
+    "explanation": "1) Observed arrival delay A = +9.5 h: the shipment reached Singapore 9.5 h late (a measured fact, not a prediction). 2) Predicted downstream delay Y_hat = +14.0 h: the gbr model (fold-3 evaluation model, HELD-OUT: this shipment is not in its training rows) prediction of how much the remaining port, customs and inland stages will add to the delay against plan. 3) SHAP baseline = +21.9 h: the explainer's expected value of Y_hat over the model's training data; it is a reference point, not a forecast for this shipment. 4) Feature contributions relative to that baseline total -7.9 h (baseline +21.9 h + contributions -7.9 h = Y_hat +14.0 h); largest driver groups: customs risk -7.7 h, upstream propagation -6.6 h, inland delivery +5.4 h. 5) Predicted final delay = A + Y_hat = (+9.5 h) + (+14.0 h) = +23.5 h; predicted delivery 2025-09-07 04:49 local time (Asia/Singapore). Contributions describe the model's prediction, not physical causes; correlated inputs can share attribution.",
+    "caveat": "Contributions describe the model's prediction, not physical causes; correlated inputs can share attribution."
+  },
+  "verification": {
+    "fold": 3,
+    "test_window_utc": [
+      "2025-09-01T00:00:00+00:00",
+      "2026-01-01T00:00:00+00:00"
+    ],
+    "n_train": 205,
+    "shipment_in_training_rows": false,
+    "latest_training_delivery_utc": "2025-08-28T09:46:41.924811+00:00",
+    "shipment_port_arrival_utc": "2025-09-03T16:46:00+00:00",
+    "shap_additivity_error_h": 2.3092638912203256e-14,
+    "group_reconciliation_error_h": 8.881784197001252e-16,
+    "actual_arrival_delay_h": 9.472685303611065,
+    "actual_downstream_delay_h": 2.3501155825000026,
+    "actual_final_delay_h": 11.822800886111068,
+    "actual_stage_delays_h": {
+      "D3_port": 4.753753668055555,
+      "D4_customs": -4.8954469713888855,
+      "D5_inland": 2.4918088858333336
+    },
+    "downstream_prediction_error_h": 11.698341972165245
+  }
+}

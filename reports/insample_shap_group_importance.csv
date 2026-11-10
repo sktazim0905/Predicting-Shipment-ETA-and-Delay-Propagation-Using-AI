@@ -1,0 +1,11 @@
+model,scope,n_rows,rank,group,label,mean_abs_net_group_contribution_h,mean_net_group_contribution_h,share_of_total_abs_net
+ridge,in_sample_full_data,250,1,customs_risk,Customs risk,10.308117090596651,1.1368683772161603e-15,0.31550708980156333
+ridge,in_sample_full_data,250,2,port_conditions,Port conditions,9.48568661948462,-8.242295734817163e-16,0.2903344377814002
+ridge,in_sample_full_data,250,3,upstream_propagation,Upstream propagation,6.257461795402954,1.0800249583553523e-15,0.19152610930400069
+ridge,in_sample_full_data,250,4,destination_context,Destination context,3.581015273887006,3.907985046680551e-17,0.10960640994558596
+ridge,in_sample_full_data,250,5,inland_delivery,Inland delivery,3.0393054505289983,-2.5579538487363605e-16,0.09302595316744985
+gbr,in_sample_full_data,250,1,port_conditions,Port conditions,11.471714455519932,0.22946768167401604,0.3147406014350985
+gbr,in_sample_full_data,250,2,customs_risk,Customs risk,9.603943936677117,-0.014814576053979182,0.263496019056179
+gbr,in_sample_full_data,250,3,upstream_propagation,Upstream propagation,9.491121015167032,-0.021227517599741647,0.2604005833818136
+gbr,in_sample_full_data,250,4,inland_delivery,Inland delivery,4.725832067674399,0.05494282848334068,0.12965901766718108
+gbr,in_sample_full_data,250,5,destination_context,Destination context,1.1555442545154402,-0.10389615447974557,0.03170377845972792

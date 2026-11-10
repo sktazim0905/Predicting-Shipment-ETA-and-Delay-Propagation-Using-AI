@@ -1,0 +1,41 @@
+model,scope,n_rows,rank,feature,group,mean_abs_shap_h,mean_shap_h
+ridge,in_sample_full_data,250,1,num__documentation_complete,customs_risk,10.35135942910931,9.094947017729283e-16
+ridge,in_sample_full_data,250,2,num__arrival_delay_pos_h,upstream_propagation,7.660733619835144,7.958078640513122e-16
+ridge,in_sample_full_data,250,3,num__dest_congestion_index,port_conditions,6.593751799376932,-4.547473508864641e-16
+ridge,in_sample_full_data,250,4,num__inland_distance_km,inland_delivery,4.39205750446034,-2.415845301584341e-16
+ridge,in_sample_full_data,250,5,num__dest_weather_severity,port_conditions,3.7060024030153484,-8.526512829121202e-17
+ridge,in_sample_full_data,250,6,num__planned_port_dwell_h,port_conditions,3.083939019703287,1.4210854715202004e-17
+ridge,in_sample_full_data,250,7,cat__destination_port_Rotterdam,destination_context,1.8176222032827212,-1.8118839761882554e-16
+ridge,in_sample_full_data,250,8,num__planned_inland_h,inland_delivery,1.6977222293708691,1.0658141036401503e-17
+ridge,in_sample_full_data,250,9,cat__cargo_type_high_value,customs_risk,1.5000875145569912,5.684341886080802e-17
+ridge,in_sample_full_data,250,10,num__missingindicator_dest_congestion_index,port_conditions,1.3044240908813103,3.552713678800501e-17
+ridge,in_sample_full_data,250,11,cat__cargo_type_hazardous,customs_risk,1.209813784761223,-2.842170943040401e-17
+ridge,in_sample_full_data,250,12,cat__destination_port_New York,destination_context,1.0981255283884994,3.730349362740526e-17
+ridge,in_sample_full_data,250,13,num__congestion_x_arrival_delay_pos,upstream_propagation,1.0671387556654872,-3.552713678800501e-17
+ridge,in_sample_full_data,250,14,cat__destination_port_Hamburg,destination_context,1.0617835568611205,7.460698725481052e-17
+ridge,in_sample_full_data,250,15,cat__destination_port_Dubai,destination_context,0.8179780737285921,-1.4210854715202004e-17
+ridge,in_sample_full_data,250,16,num__projected_nonworking_wait_h,port_conditions,0.6315936734478959,6.039613253960852e-17
+ridge,in_sample_full_data,250,17,cat__destination_port_Los Angeles,destination_context,0.6309654215563364,5.3290705182007515e-18
+ridge,in_sample_full_data,250,18,cat__cargo_type_reefer,customs_risk,0.6176705198354222,3.552713678800501e-18
+ridge,in_sample_full_data,250,19,cat__destination_port_Singapore,destination_context,0.5401733827014741,-3.1974423109204506e-17
+ridge,in_sample_full_data,250,20,num__arrival_delay_h,upstream_propagation,0.39330842160325585,-1.4210854715202004e-17
+ridge,in_sample_full_data,250,21,cat__cargo_type_general,customs_risk,0.025625902712275675,-2.886579864025407e-18
+gbr,in_sample_full_data,250,1,num__documentation_complete,customs_risk,9.612138142515562,0.0013897648213517186
+gbr,in_sample_full_data,250,2,num__arrival_delay_h,upstream_propagation,9.491121015167032,-0.021227517599741647
+gbr,in_sample_full_data,250,3,num__dest_congestion_index,port_conditions,5.824257265819963,0.16103204347727942
+gbr,in_sample_full_data,250,4,num__planned_port_dwell_h,port_conditions,5.512256564261904,0.030554967141671142
+gbr,in_sample_full_data,250,5,num__inland_distance_km,inland_delivery,3.58096430994125,0.020937661200370713
+gbr,in_sample_full_data,250,6,num__dest_weather_severity,port_conditions,3.3445783796627184,-0.00893505057761692
+gbr,in_sample_full_data,250,7,num__projected_nonworking_wait_h,port_conditions,3.2609196734487544,0.045288488674964725
+gbr,in_sample_full_data,250,8,num__planned_inland_h,inland_delivery,3.233540892898404,0.034005167282969824
+gbr,in_sample_full_data,250,9,cat__cargo_type_hazardous,customs_risk,1.3896028460682095,-0.044025332826713774
+gbr,in_sample_full_data,250,10,cat__cargo_type_high_value,customs_risk,0.8860698879738209,0.034378939287929
+gbr,in_sample_full_data,250,11,cat__destination_port_Rotterdam,destination_context,0.6954717826890212,-0.005892658963418395
+gbr,in_sample_full_data,250,12,cat__destination_port_Los Angeles,destination_context,0.5482480371560845,-0.006256679417054422
+gbr,in_sample_full_data,250,13,cat__destination_port_Hamburg,destination_context,0.3912857963087517,-0.014030914297503827
+gbr,in_sample_full_data,250,14,cat__cargo_type_general,customs_risk,0.29559015748009443,-0.0065579473365461795
+gbr,in_sample_full_data,250,15,cat__destination_port_New York,destination_context,0.16674061727159284,-0.07367609332807167
+gbr,in_sample_full_data,250,16,cat__destination_port_Dubai,destination_context,0.053685433344001894,-0.004039808473697267
+gbr,in_sample_full_data,250,17,num__missingindicator_dest_congestion_index,port_conditions,0.042376508936904485,0.0015272329577175113
+gbr,in_sample_full_data,250,18,cat__destination_port_Singapore,destination_context,0.0,0.0
+gbr,in_sample_full_data,250,19,cat__cargo_type_reefer,customs_risk,0.0,0.0

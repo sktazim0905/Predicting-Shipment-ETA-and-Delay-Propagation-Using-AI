@@ -1,0 +1,70 @@
+{
+  "result": {
+    "shipment_id": "SHP-0209",
+    "model_name": "ridge",
+    "destination_port": "Singapore",
+    "destination_timezone": "Asia/Singapore",
+    "arrival_delay_h": 9.47268530361111,
+    "predicted_downstream_delay_h": 8.119873993425363,
+    "predicted_final_delay_h": 17.592559297036473,
+    "scheduled_delivery_utc": "2025-09-05T21:18:40.927007+00:00",
+    "predicted_eta_utc": "2025-09-06T14:54:14.140476+00:00",
+    "predicted_eta_local": "2025-09-06T22:54+08:00",
+    "shap_base_value_h": 22.982473226991875,
+    "feature_contributions_h": {
+      "num__arrival_delay_h": -0.012755602867753114,
+      "num__dest_congestion_index": 2.3530495671412632,
+      "num__dest_weather_severity": -2.9949191793589103,
+      "num__planned_port_dwell_h": -12.891088505646959,
+      "num__projected_nonworking_wait_h": 0.10071324568708163,
+      "num__inland_distance_km": 3.702459830680723,
+      "num__planned_inland_h": -0.4337911838607274,
+      "num__documentation_complete": -6.589798455928241,
+      "num__missingindicator_dest_congestion_index": 0.5224696768545803,
+      "num__arrival_delay_pos_h": -2.528067767695549,
+      "num__congestion_x_arrival_delay_pos": 0.023188328344618005,
+      "cat__destination_port_Dubai": -0.18631242127837616,
+      "cat__destination_port_Hamburg": 0.9074952606123018,
+      "cat__destination_port_Los Angeles": -0.16357691361319332,
+      "cat__destination_port_New York": 0.6683128953633422,
+      "cat__destination_port_Rotterdam": -0.5586848787448846,
+      "cat__destination_port_Singapore": 3.397274443106648,
+      "cat__cargo_type_general": 0.014248171614385297,
+      "cat__cargo_type_hazardous": 0.20963543423228673,
+      "cat__cargo_type_high_value": -0.3451914382011737,
+      "cat__cargo_type_reefer": -0.05725974000797235
+    },
+    "group_contributions_h": {
+      "upstream_propagation": -2.517635042218684,
+      "port_conditions": -12.909775195322943,
+      "customs_risk": -6.768366028290715,
+      "inland_delivery": 3.2686686468199957,
+      "destination_context": 4.064508385445838
+    },
+    "model_scope": "fold-3 evaluation model, HELD-OUT: this shipment is not in its training rows",
+    "explanation": "1) Observed arrival delay A = +9.5 h: the shipment reached Singapore 9.5 h late (a measured fact, not a prediction). 2) Predicted downstream delay Y_hat = +8.1 h: the ridge model (fold-3 evaluation model, HELD-OUT: this shipment is not in its training rows) prediction of how much the remaining port, customs and inland stages will add to the delay against plan. 3) SHAP baseline = +23.0 h: the explainer's expected value of Y_hat over the model's training data; it is a reference point, not a forecast for this shipment. 4) Feature contributions relative to that baseline total -14.9 h (baseline +23.0 h + contributions -14.9 h = Y_hat +8.1 h); largest driver groups: port conditions -12.9 h, customs risk -6.8 h, destination context +4.1 h. 5) Predicted final delay = A + Y_hat = (+9.5 h) + (+8.1 h) = +17.6 h; predicted delivery 2025-09-06 22:54 local time (Asia/Singapore). Contributions describe the model's prediction, not physical causes; correlated inputs can share attribution.",
+    "caveat": "Contributions describe the model's prediction, not physical causes; correlated inputs can share attribution."
+  },
+  "verification": {
+    "fold": 3,
+    "test_window_utc": [
+      "2025-09-01T00:00:00+00:00",
+      "2026-01-01T00:00:00+00:00"
+    ],
+    "n_train": 205,
+    "shipment_in_training_rows": false,
+    "latest_training_delivery_utc": "2025-08-28T09:46:41.924811+00:00",
+    "shipment_port_arrival_utc": "2025-09-03T16:46:00+00:00",
+    "shap_additivity_error_h": 1.7763568394002505e-15,
+    "group_reconciliation_error_h": 0.0,
+    "actual_arrival_delay_h": 9.472685303611065,
+    "actual_downstream_delay_h": 2.3501155825000026,
+    "actual_final_delay_h": 11.822800886111068,
+    "actual_stage_delays_h": {
+      "D3_port": 4.753753668055555,
+      "D4_customs": -4.8954469713888855,
+      "D5_inland": 2.4918088858333336
+    },
+    "downstream_prediction_error_h": 5.769758410925361
+  }
+}

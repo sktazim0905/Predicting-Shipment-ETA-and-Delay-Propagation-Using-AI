@@ -1,0 +1,51 @@
+level,model,name,rank_in_sample,rank_forward,importance_h_in_sample,importance_h_forward,importance_definition,rank_change,importance_ratio_forward_to_in_sample
+feature,ridge,num__documentation_complete,1,1,10.35135942910931,10.03597317275446,mean(abs(SHAP_feature)),0,0.9695318997939589
+feature,ridge,num__arrival_delay_pos_h,2,2,7.660733619835144,5.8432644992073195,mean(abs(SHAP_feature)),0,0.7627552123830491
+feature,ridge,num__dest_congestion_index,3,4,6.593751799376932,4.819802450324523,mean(abs(SHAP_feature)),1,0.7309651010491423
+feature,ridge,num__inland_distance_km,4,6,4.39205750446034,2.3701729232425923,mean(abs(SHAP_feature)),2,0.5396497930265192
+feature,ridge,num__dest_weather_severity,5,5,3.7060024030153484,2.462301116019536,mean(abs(SHAP_feature)),0,0.664408936706601
+feature,ridge,num__planned_port_dwell_h,6,3,3.083939019703287,5.641830929451198,mean(abs(SHAP_feature)),-3,1.8294236343214114
+feature,ridge,cat__destination_port_Rotterdam,7,13,1.8176222032827212,0.6324222624980044,mean(abs(SHAP_feature)),6,0.3479393359939247
+feature,ridge,num__planned_inland_h,8,11,1.6977222293708691,0.9543461327470149,mean(abs(SHAP_feature)),3,0.5621332608106747
+feature,ridge,cat__cargo_type_high_value,9,14,1.5000875145569912,0.5954209901655324,mean(abs(SHAP_feature)),5,0.396924169015148
+feature,ridge,num__missingindicator_dest_congestion_index,10,12,1.3044240908813103,0.7066845912794524,mean(abs(SHAP_feature)),2,0.5417598434585748
+feature,ridge,cat__cargo_type_hazardous,11,20,1.209813784761223,0.36793021542530263,mean(abs(SHAP_feature)),9,0.30412136153492403
+feature,ridge,cat__destination_port_New York,12,10,1.0981255283884994,1.1257279552307946,mean(abs(SHAP_feature)),-2,1.0251359486039833
+feature,ridge,num__congestion_x_arrival_delay_pos,13,15,1.0671387556654872,0.5314097553955225,mean(abs(SHAP_feature)),2,0.4979762496434924
+feature,ridge,cat__destination_port_Hamburg,14,7,1.0617835568611205,1.7996054862163233,mean(abs(SHAP_feature)),-7,1.6948892027828877
+feature,ridge,cat__destination_port_Dubai,15,21,0.8179780737285921,0.3085084617337674,mean(abs(SHAP_feature)),6,0.3771598183891315
+feature,ridge,num__projected_nonworking_wait_h,16,19,0.6315936734478959,0.37313572820359725,mean(abs(SHAP_feature)),3,0.5907844614190544
+feature,ridge,cat__destination_port_Los Angeles,17,17,0.6309654215563364,0.42021018871879534,mean(abs(SHAP_feature)),0,0.665979742094752
+feature,ridge,cat__cargo_type_reefer,18,16,0.6176705198354222,0.4269648054915545,mean(abs(SHAP_feature)),-2,0.6912500949621474
+feature,ridge,cat__destination_port_Singapore,19,8,0.5401733827014741,1.5799027457736223,mean(abs(SHAP_feature)),-11,2.924806731261605
+feature,ridge,num__arrival_delay_h,20,9,0.39330842160325585,1.4654532517670429,mean(abs(SHAP_feature)),-11,3.725964589808091
+feature,ridge,cat__cargo_type_general,21,18,0.025625902712275675,0.37538659866451096,mean(abs(SHAP_feature)),-3,14.64871707659641
+feature,gbr,num__documentation_complete,1,2,9.612138142515562,8.862017359151388,mean(abs(SHAP_feature)),1,0.9219610900049068
+feature,gbr,num__arrival_delay_h,2,1,9.491121015167032,10.483656732196971,mean(abs(SHAP_feature)),-1,1.1045751829993364
+feature,gbr,num__dest_congestion_index,3,4,5.824257265819963,5.266015291291939,mean(abs(SHAP_feature)),1,0.9041522465355191
+feature,gbr,num__planned_port_dwell_h,4,3,5.512256564261904,6.6016752620529235,mean(abs(SHAP_feature)),-1,1.1976357023826039
+feature,gbr,num__inland_distance_km,5,6,3.58096430994125,4.042509690748165,mean(abs(SHAP_feature)),1,1.1288885732610074
+feature,gbr,num__dest_weather_severity,6,5,3.3445783796627184,4.435607520315622,mean(abs(SHAP_feature)),-1,1.3262082740494565
+feature,gbr,num__projected_nonworking_wait_h,7,8,3.2609196734487544,2.5242630502801897,mean(abs(SHAP_feature)),1,0.7740954402628767
+feature,gbr,num__planned_inland_h,8,7,3.233540892898404,2.7025200445775366,mean(abs(SHAP_feature)),-1,0.8357772900020807
+feature,gbr,cat__cargo_type_hazardous,9,11,1.3896028460682095,0.6088224980259573,mean(abs(SHAP_feature)),2,0.4381269797687741
+feature,gbr,cat__cargo_type_high_value,10,9,0.8860698879738209,0.7092955946075673,mean(abs(SHAP_feature)),-1,0.8004962184523796
+feature,gbr,cat__destination_port_Rotterdam,11,12,0.6954717826890212,0.5935597308439221,mean(abs(SHAP_feature)),1,0.8534634267244328
+feature,gbr,cat__destination_port_Los Angeles,12,14,0.5482480371560845,0.2376567431019281,mean(abs(SHAP_feature)),2,0.43348398351724143
+feature,gbr,cat__destination_port_Hamburg,13,10,0.3912857963087517,0.7077977313340669,mean(abs(SHAP_feature)),-3,1.8089021835476113
+feature,gbr,cat__cargo_type_general,14,13,0.29559015748009443,0.41727873121397674,mean(abs(SHAP_feature)),-1,1.4116800598885877
+feature,gbr,cat__destination_port_New York,15,15,0.16674061727159284,0.22675047937524295,mean(abs(SHAP_feature)),0,1.3598994839146121
+feature,gbr,cat__destination_port_Dubai,16,16,0.053685433344001894,0.05441992695677046,mean(abs(SHAP_feature)),0,1.0136814321319179
+feature,gbr,num__missingindicator_dest_congestion_index,17,19,0.042376508936904485,0.011035861472222639,mean(abs(SHAP_feature)),2,0.2604240356055339
+feature,gbr,cat__destination_port_Singapore,18,18,0.0,0.014157696610280794,mean(abs(SHAP_feature)),0,inf
+feature,gbr,cat__cargo_type_reefer,19,17,0.0,0.04726116503817808,mean(abs(SHAP_feature)),-2,inf
+group,ridge,customs_risk,1,1,10.308117090596651,10.048420127363801,mean(abs(sum(feature SHAP values within group))); not the sum of the features' mean |SHAP|,0,0.9748065567212316
+group,ridge,port_conditions,2,2,9.48568661948462,9.248905696211777,mean(abs(sum(feature SHAP values within group))); not the sum of the features' mean |SHAP|,0,0.9750380828746261
+group,ridge,upstream_propagation,3,3,6.257461795402954,6.650564014346053,mean(abs(sum(feature SHAP values within group))); not the sum of the features' mean |SHAP|,0,1.0628213534171143
+group,ridge,destination_context,4,4,3.581015273887006,3.525639037839831,mean(abs(sum(feature SHAP values within group))); not the sum of the features' mean |SHAP|,0,0.9845361631236309
+group,ridge,inland_delivery,5,5,3.0393054505289983,2.3247384060530885,mean(abs(sum(feature SHAP values within group))); not the sum of the features' mean |SHAP|,0,0.7648913358308432
+group,gbr,port_conditions,1,2,11.471714455519932,10.333980724390575,mean(abs(sum(feature SHAP values within group))); not the sum of the features' mean |SHAP|,1,0.9008226943286664
+group,gbr,customs_risk,2,3,9.603943936677117,8.974067235736028,mean(abs(sum(feature SHAP values within group))); not the sum of the features' mean |SHAP|,1,0.9344147878107021
+group,gbr,upstream_propagation,3,1,9.491121015167032,10.483656732196971,mean(abs(sum(feature SHAP values within group))); not the sum of the features' mean |SHAP|,-2,1.1045751829993364
+group,gbr,inland_delivery,4,4,4.725832067674399,4.74116519677562,mean(abs(sum(feature SHAP values within group))); not the sum of the features' mean |SHAP|,0,1.0032445353287314
+group,gbr,destination_context,5,5,1.1555442545154402,1.0917535656517037,mean(abs(sum(feature SHAP values within group))); not the sum of the features' mean |SHAP|,0,0.9447959793712217

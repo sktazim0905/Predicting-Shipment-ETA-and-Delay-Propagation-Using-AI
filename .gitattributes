@@ -1,2 +1,5 @@
 # Frozen generated artifacts: store byte-for-byte so their SHA-256 hashes match on every platform.
 data/** -text
+# Generated models and evaluation outputs: also stored byte-for-byte (reproducible from the code).
+models/** binary
+reports/** -text
