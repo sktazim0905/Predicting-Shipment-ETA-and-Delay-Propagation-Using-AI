@@ -99,7 +99,7 @@ NET_AXIS_TITLE = "Net SHAP contribution per driver group (h)"
 NET_RAISES, NET_LOWERS = "Raises delay", "Lowers delay"
 
 
-def contribution_chart(groups: pd.DataFrame, height=220) -> alt.Chart:
+def contribution_chart(groups: pd.DataFrame, height=300) -> alt.Chart:
     """One bar per driver group: its net SHAP contribution to Y_hat (hours).
 
     ``groups`` comes from :func:`dashboard_data.group_breakdown`; the positive and
@@ -110,7 +110,7 @@ def contribution_chart(groups: pd.DataFrame, height=220) -> alt.Chart:
     order = data.sort_values("contribution_h", key=abs, ascending=False)["label"].tolist()
     lim = max(1.0, float(data["contribution_h"].abs().max())) * 1.25  # symmetric axis with room for end labels
     bars = bar_base(data).encode(
-        y=alt.Y("label:N", title=None, sort=order),
+        y=alt.Y("label:N", title=None, sort=order, axis=alt.Axis(labelOverlap=False, labelLimit=220)),
         x=alt.X("contribution_h:Q", title=NET_AXIS_TITLE, scale=alt.Scale(domain=[-lim, lim])),
         color=alt.Color("direction:N", scale=alt.Scale(domain=[NET_RAISES, NET_LOWERS], range=[RAISES, LOWERS]),
                         legend=alt.Legend(orient="top", title=None)),
