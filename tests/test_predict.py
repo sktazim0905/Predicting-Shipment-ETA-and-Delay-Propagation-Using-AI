@@ -227,6 +227,96 @@ def test_held_out_rejects_2024_shipments(df):
         pr.explain_held_out(sid, "gbr", df)
 
 
+# Scenario API (used by the dashboard) ----------------------------------------
+
+@pytest.mark.parametrize("local, tz, expected", [
+    (datetime(2026, 3, 2, 21, 30), "Europe/Amsterdam", datetime(2026, 3, 2, 20, 30)),      # CET +1
+    (datetime(2025, 7, 1, 12, 0), "Europe/Amsterdam", datetime(2025, 7, 1, 10, 0)),        # CEST +2
+    (datetime(2025, 1, 15, 8, 0), "America/New_York", datetime(2025, 1, 15, 13, 0)),       # EST -5
+    (datetime(2025, 7, 15, 8, 0), "America/Los_Angeles", datetime(2025, 7, 15, 15, 0)),    # PDT -7
+    (datetime(2025, 9, 7, 4, 49), "Asia/Singapore", datetime(2025, 9, 6, 20, 49)),         # +8
+    (datetime(2025, 9, 7, 4, 49), "Asia/Dubai", datetime(2025, 9, 7, 0, 49)),              # +4
+])
+def test_local_to_utc(local, tz, expected):
+    out = pr.local_to_utc(local, tz)
+    assert out == expected.replace(tzinfo=dp.UTC) and out.utcoffset().total_seconds() == 0
+
+
+@pytest.mark.parametrize("local, tz, match", [
+    (datetime(2025, 3, 30, 2, 30), "Europe/Amsterdam", "does not exist"),
+    (datetime(2025, 10, 26, 2, 30), "Europe/Amsterdam", "ambiguous"),
+    (datetime(2025, 3, 9, 2, 15), "America/New_York", "does not exist"),
+    (datetime(2025, 11, 2, 1, 30), "America/New_York", "ambiguous"),
+])
+def test_local_to_utc_rejects_dst_gaps_and_overlaps(local, tz, match):
+    with pytest.raises(pr.InvalidShipmentError, match=match):
+        pr.local_to_utc(local, tz)
+
+
+def test_local_to_utc_rejects_aware_and_non_datetime():
+    with pytest.raises(pr.InvalidShipmentError, match="naive"):
+        pr.local_to_utc(datetime(2025, 1, 1, tzinfo=dp.UTC), "Asia/Dubai")
+    with pytest.raises(pr.InvalidShipmentError):
+        pr.local_to_utc("2025-01-01 10:00", "Asia/Dubai")
+
+
+def _scenario_inputs(row) -> dict:
+    tz = row["dest_timezone"]
+    naive_local = lambda ts: dp.to_local(ts.to_pydatetime(), tz).replace(tzinfo=None)
+    return dict(destination_port=row["destination_port"], cargo_type=row["cargo_type"],
+                documentation_complete=bool(row["documentation_complete"]),
+                dest_congestion_index=None if pd.isna(row["dest_congestion_index"]) else float(row["dest_congestion_index"]),
+                dest_weather_severity=float(row["dest_weather_severity"]),
+                planned_port_dwell_h=float(row["planned_port_dwell_h"]),
+                inland_distance_km=float(row["inland_distance_km"]), planned_inland_h=float(row["planned_inland_h"]),
+                arrival_delay_h=float(row["arrival_delay_h"]),
+                actual_port_arrival_local=naive_local(row["actual_port_arrival"]),
+                scheduled_delivery_local=naive_local(row["scheduled_delivery"]))
+
+
+@pytest.mark.parametrize("name", tr.LEARNED_MODELS)
+def test_scenario_matches_record_path(predictors, df, name):
+    """A scenario built from a dataset row's checkpoint values reproduces the existing prediction path."""
+    rows = [df[df["shipment_id"] == "SHP-0209"].iloc[0], df[df["dest_congestion_index"].isna()].iloc[0],
+            df[df["destination_port"] == "New York"].iloc[3]]
+    for row in rows:
+        s = pr.predict_scenario(name, predictor=predictors[name], **_scenario_inputs(row))
+        r = predictors[name].predict(pr.checkpoint_record(row))
+        assert s.model_scope == pr.SCOPE_NEW_RECORD  # no shipment_id: treated as a new scenario
+        assert s.arrival_delay_h == pytest.approx(row["arrival_delay_h"], abs=1e-6)
+        assert s.predicted_downstream_delay_h == pytest.approx(r.predicted_downstream_delay_h, abs=1e-6)
+        assert s.predicted_final_delay_h == pytest.approx(r.predicted_final_delay_h, abs=1e-6)
+        assert s.predicted_eta_utc[:16] == r.predicted_eta_utc[:16]
+        assert s.model_inputs["projected_nonworking_wait_h"] == pytest.approx(row["projected_nonworking_wait_h"], abs=1e-6)
+
+
+@pytest.mark.parametrize("name", tr.LEARNED_MODELS)
+def test_scenario_definitions_and_missing_congestion(predictors, df, name):
+    inputs = _scenario_inputs(df.iloc[10]) | {"dest_congestion_index": None, "arrival_delay_h": 14.5}
+    r = pr.predict_scenario(name, predictor=predictors[name], **inputs)
+    assert r.arrival_delay_h == pytest.approx(14.5, abs=1e-6)
+    assert r.predicted_final_delay_h == pytest.approx(r.arrival_delay_h + r.predicted_downstream_delay_h)
+    sched, eta = datetime.fromisoformat(r.scheduled_delivery_utc), datetime.fromisoformat(r.predicted_eta_utc)
+    assert dp.hours_between(sched, eta) == pytest.approx(r.predicted_final_delay_h, abs=1e-6)
+    assert r.model_inputs["dest_congestion_index"] is None
+    assert "num__missingindicator_dest_congestion_index" in r.feature_contributions_h
+    assert r.shap_base_value_h + sum(r.feature_contributions_h.values()) == pytest.approx(
+        r.predicted_downstream_delay_h, abs=1e-6)
+    assert all(math.isfinite(v) for v in r.feature_contributions_h.values())
+
+
+def test_scenario_validation(predictors, df):
+    base = _scenario_inputs(df.iloc[10])
+    with pytest.raises(pr.InvalidShipmentError, match="unknown destination"):
+        pr.scenario_record(**(base | {"destination_port": "Atlantis"}))
+    with pytest.raises(pr.InvalidShipmentError, match="within"):
+        pr.predict_scenario("gbr", predictor=predictors["gbr"], **(base | {"dest_congestion_index": 1.4}))
+    with pytest.raises(pr.InvalidShipmentError, match="finite"):
+        pr.scenario_record(**(base | {"arrival_delay_h": float("inf")}))
+    with pytest.raises(ValueError, match="holds"):
+        pr.predict_scenario("ridge", predictor=predictors["gbr"], **base)
+
+
 def test_predictor_rejects_mismatched_artifacts(tmp_path):
     with pytest.raises(ValueError, match="holds"):
         pr.ShipmentPredictor("ridge", model_path=tr.MODELS_DIR / "gbr_model.joblib")

@@ -25,7 +25,7 @@ from __future__ import annotations
 import hashlib
 import math
 from dataclasses import asdict, dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Mapping
 
@@ -78,6 +78,9 @@ class PredictionResult:
     feature_contributions_h: dict[str, float] = field(default_factory=dict)
     group_contributions_h: dict[str, float] = field(default_factory=dict)
     model_scope: str = SCOPE_NEW_RECORD
+    #: The checkpoint feature values the model received (derived ones included);
+    #: missing congestion is reported as None.
+    model_inputs: dict[str, Any] = field(default_factory=dict)
     explanation: str = ""
     caveat: str = ex.CAVEAT
 
@@ -252,10 +255,88 @@ class ShipmentPredictor:
     def predict(self, record: Mapping[str, Any]) -> PredictionResult:
         X, ctx = prepare_input(record)
         scope = SCOPE_IN_SAMPLE if ctx["shipment_id"] in self.training_ids else SCOPE_NEW_RECORD
-        return _build_result(self.model_name, scope, ctx, self.explainer.explain(X))
+        return _build_result(self.model_name, scope, ctx, self.explainer.explain(X), X)
 
 
-def _build_result(model_name: str, scope: str, ctx: dict[str, Any], exp: ex.Explanation) -> PredictionResult:
+# ---------------------------------------------------------------------------
+# Scenario inputs (e.g. from a form) in destination-local time
+# ---------------------------------------------------------------------------
+
+def local_to_utc(local: datetime, tz_key: str) -> datetime:
+    """Convert a naive destination-local wall-clock time to an aware UTC datetime.
+
+    Times that do not exist (DST spring-forward gap) or occur twice (DST
+    fall-back overlap) are rejected rather than silently shifted.
+    """
+    if not isinstance(local, datetime):
+        raise InvalidShipmentError(f"local time must be a datetime, got {type(local).__name__}")
+    if local.tzinfo is not None:
+        raise InvalidShipmentError("local time must be naive (wall-clock time at the destination)")
+    zone = dp.get_zone(tz_key)
+    first = local.replace(tzinfo=zone, fold=0).astimezone(timezone.utc)
+    second = local.replace(tzinfo=zone, fold=1).astimezone(timezone.utc)
+    if first.astimezone(zone).replace(tzinfo=None) != local:
+        raise InvalidShipmentError(f"{local:%Y-%m-%d %H:%M} does not exist in {tz_key} (daylight-saving gap)")
+    if first != second:
+        raise InvalidShipmentError(f"{local:%Y-%m-%d %H:%M} is ambiguous in {tz_key} (daylight-saving overlap)")
+    return first
+
+
+def scenario_record(*, destination_port: str, cargo_type: str, documentation_complete: bool,
+                    dest_congestion_index: float | None, dest_weather_severity: float,
+                    planned_port_dwell_h: float, inland_distance_km: float, planned_inland_h: float,
+                    arrival_delay_h: float, actual_port_arrival_local: datetime,
+                    scheduled_delivery_local: datetime, shipment_id: str | None = None) -> dict[str, Any]:
+    """Build a checkpoint record from form-style inputs.
+
+    ``arrival_delay_h`` (A = D1 + D2) and the actual port arrival (local time)
+    define the scheduled port arrival as ``T1 - A``; :func:`prepare_input` then
+    re-derives A and the projected non-working wait from these timestamps, so
+    the scenario follows exactly the same path as any other record.
+    """
+    destinations = dg.DEFAULT_CONFIG["destinations"]
+    if destination_port not in destinations:
+        raise InvalidShipmentError(f"unknown destination_port {destination_port!r}")
+    tz = destinations[destination_port]["tz"]
+    a = _finite(arrival_delay_h, "arrival_delay_h")
+    t1 = local_to_utc(actual_port_arrival_local, tz)
+    return {
+        "shipment_id": shipment_id,
+        "destination_port": destination_port,
+        "cargo_type": cargo_type,
+        "documentation_complete": documentation_complete,
+        "dest_congestion_index": dest_congestion_index,
+        "dest_weather_severity": dest_weather_severity,
+        "planned_port_dwell_h": planned_port_dwell_h,
+        "inland_distance_km": inland_distance_km,
+        "planned_inland_h": planned_inland_h,
+        "scheduled_port_arrival": dp.add_hours(t1, -a),
+        "actual_port_arrival": t1,
+        "scheduled_delivery": local_to_utc(scheduled_delivery_local, tz),
+    }
+
+
+def predict_scenario(model_name: str = "gbr", predictor: ShipmentPredictor | None = None,
+                     **inputs: Any) -> PredictionResult:
+    """Predict a new scenario with the final full-data model (see :func:`scenario_record`)."""
+    predictor = predictor or ShipmentPredictor(model_name)
+    if predictor.model_name != model_name:
+        raise ValueError(f"predictor holds {predictor.model_name!r}, not {model_name!r}")
+    return predictor.predict(scenario_record(**inputs))
+
+
+def _model_inputs(X: pd.DataFrame) -> dict[str, Any]:
+    out = {}
+    for k, v in X.iloc[0].items():
+        if isinstance(v, (float, np.floating)):
+            out[k] = None if math.isnan(v) else float(v)
+        else:
+            out[k] = v
+    return out
+
+
+def _build_result(model_name: str, scope: str, ctx: dict[str, Any], exp: ex.Explanation,
+                  X: pd.DataFrame) -> PredictionResult:
     y_hat = float(exp.predictions[0])
     final = tr.predicted_final_delay(np.array([ctx["arrival_delay_h"]]), np.array([y_hat]))[0]
     eta_utc = dp.add_hours(ctx["scheduled_delivery"], float(final))
@@ -277,6 +358,7 @@ def _build_result(model_name: str, scope: str, ctx: dict[str, Any], exp: ex.Expl
         feature_contributions_h={k: float(v) for k, v in exp.contributions.iloc[0].items()},
         group_contributions_h={k: float(v) for k, v in exp.grouped().iloc[0].items()},
         model_scope=scope,
+        model_inputs=_model_inputs(X),
     )
     result.explanation = explanation_text(result)
     return result
@@ -315,7 +397,7 @@ def explain_held_out(shipment_id: str, model_name: str = "gbr",
     X_one, ctx = prepare_input(checkpoint_record(row))
     exp = explainer.explain(X_one)
     scope = f"fold-{fold.fold} evaluation model, HELD-OUT: this shipment is not in its training rows"
-    result = _build_result(model_name, scope, ctx, exp)
+    result = _build_result(model_name, scope, ctx, exp, X_one)
     train = df.iloc[fold.train_idx]
     verification = {
         "fold": fold.fold,

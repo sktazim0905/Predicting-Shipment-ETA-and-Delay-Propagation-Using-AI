@@ -59,18 +59,39 @@ All commands below run from the repository root.
 
 | Step | Command | Output |
 |---|---|---|
-| Tests | `pytest -q` | 302 tests |
+| Tests | `pytest -q` | full test suite |
 | Regenerate dataset | `python -m src.data_generator --seed 42 --out-dir data` | `data/shipments.csv`, `data/generation_config.json` |
 | Train and evaluate | `python -m src.train` | `models/*.joblib`, `reports/{forward_predictions,model_comparison,cv_metrics,carrier_ablation}.csv`, `reports/training_metrics.json` |
-| SHAP importance | `python -m src.explainability` | `reports/forward_shap_*.csv`, `reports/insample_shap_*.csv`, `reports/shap_insample_vs_forward.csv`, `reports/figures/{forward,insample}_shap_*.png` |
+| SHAP importance | `python -m src.explainability` | `reports/forward_shap_*.csv` (incl. per-shipment `forward_shap_values.csv`), `reports/insample_shap_*.csv`, `reports/shap_insample_vs_forward.csv`, `reports/figures/{forward,insample}_shap_*.png` |
 | Stage analysis | `python -m src.stage_analysis` | `reports/stage_analysis.md`, `reports/figures/*.png` |
 | Held-out example | `python -m src.predict --shipment-id SHP-0209 --model gbr --held-out --out reports/heldout_example_SHP-0209_gbr.json` | explanation + verification JSON |
+| Dashboard | `python -m streamlit run dashboard/app.py` | interactive app at http://localhost:8501 (read-only) |
 
 The frozen dataset hashes are
 `shipments.csv` `b7dd07481d2968274e9c3c88dd0d860c352a78e70c77f4aaf6f79a7bba3f1677` and
 `generation_config.json` `7a6d944bed653d300cdf605f6562af442ac9e362131e93bf78a0bdf48341742e`.
 Regenerating with seed 42 reproduces both byte-for-byte; `python -m src.train` reproduces the
 reports and the model files.
+
+## Dashboard
+
+```bat
+venv\Scripts\activate
+python -m streamlit run dashboard/app.py
+```
+
+Four sections, all computed from the frozen artifacts and project modules (the app never fits a model,
+regenerates data or writes files):
+
+- **Overview:** dataset size, checkpoint and target definitions, forward folds, the pooled and per-fold
+  comparison of schedule-only, carry-forward, Ridge and Gradient Boosting, and limitations derived
+  from the evaluation outputs.
+- **Predict ETA:** a form for a new scenario (destination-local times, `A = D1 + D2`, optional
+  missing congestion); returns A, `Y_hat`, `A + Y_hat`, the local ETA, the >24 h status and SHAP
+  drivers. Labelled as a scenario forecast from the full-data model, not an out-of-sample result.
+- **Explain prediction:** any of the 126 held-out shipments (default SHP-0209), explained by its
+  forward-fold evaluation model from `reports/forward_shap_values.csv`.
+- **Stage analysis:** descriptive stage-delay patterns, labelled as synthetic simulation output.
 
 ## Prediction usage
 

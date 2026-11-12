@@ -1,8 +1,21 @@
 venv/
+.venv/
 __pycache__/
 *.py[cod]
 .env
+.env.*
 *.log
 .pytest_cache/
 .ipynb_checkpoints/
 .vscode/
+.idea/
+*.swp
+*.tmp
+.DS_Store
+Thumbs.db
+scratch/
+tmp/
+
+# Technical report is submitted separately (email), not via GitHub
+reports/final_report.pdf
+reports/final_report.md

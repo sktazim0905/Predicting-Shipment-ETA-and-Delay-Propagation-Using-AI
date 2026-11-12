@@ -349,6 +349,46 @@ def save_in_sample_group_figure(in_group: pd.DataFrame, path):
     return path
 
 
+FORWARD_SHAP_VALUES_FILE = "forward_shap_values.csv"
+
+
+def forward_shap_values_table(items: list[ForwardExplanation]) -> pd.DataFrame:
+    """Per-shipment held-out SHAP values in long format (features and driver groups).
+
+    One block per (shipment, model): ``level='feature'`` rows hold each transformed
+    feature's contribution, ``level='group'`` rows hold the net group sums. For
+    every block, ``shap_base_value_h + sum(feature contributions) =
+    predicted_downstream_delay_h``.
+    """
+    rows = []
+    for it in items:
+        e = it.explanation
+        grouped = e.grouped()
+        for i, sid in enumerate(it.shipment_ids):
+            common = {"shipment_id": sid, "fold": it.fold, "model": it.model_name,
+                      "shap_base_value_h": e.base_value, "predicted_downstream_delay_h": float(e.predictions[i])}
+            for name, value in e.contributions.iloc[i].items():
+                rows.append(common | {"level": "feature", "name": name, "group": e.feature_groups[name],
+                                      "contribution_h": float(value)})
+            for name, value in grouped.iloc[i].items():
+                rows.append(common | {"level": "group", "name": name, "group": name, "contribution_h": float(value)})
+    return pd.DataFrame(rows)
+
+
+def export_forward_shap_values(df: pd.DataFrame | None = None, path=None):
+    """Write only ``reports/forward_shap_values.csv`` (fold models rebuilt in memory, nothing saved)."""
+    from pathlib import Path
+
+    from src import preprocessing as pp
+    from src import train as tr
+
+    df = pp.load_dataset() if df is None else df
+    path = Path(path or tr.REPORTS_DIR / FORWARD_SHAP_VALUES_FILE)
+    table = forward_shap_values_table(forward_explanations(df))
+    table.to_csv(path, index=False)
+    return path, table
+
+
 def run_forward_report(df: pd.DataFrame | None = None, reports_dir=None) -> dict:
     """Compute and save forward and in-sample SHAP importance outputs."""
     from pathlib import Path
@@ -368,6 +408,7 @@ def run_forward_report(df: pd.DataFrame | None = None, reports_dir=None) -> dict
     in_feat.to_csv(reports_dir / "insample_shap_importance.csv", index=False)
     in_group.to_csv(reports_dir / "insample_shap_group_importance.csv", index=False)
     comparison.to_csv(reports_dir / "shap_insample_vs_forward.csv", index=False)
+    forward_shap_values_table(items).to_csv(reports_dir / FORWARD_SHAP_VALUES_FILE, index=False)
     save_forward_figure(fwd_feat, fwd_group, reports_dir / "figures" / "forward_shap_importance.png")
     save_in_sample_group_figure(in_group, reports_dir / "figures" / "insample_shap_group_importance.png")
     return {"items": items, "forward_feature": fwd_feat, "forward_group": fwd_group,

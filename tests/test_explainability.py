@@ -180,6 +180,23 @@ def test_importance_tables_group_uses_row_level_sums():
     assert per_group.loc["port_conditions", ex.GROUP_IMPORTANCE] == 0.0  # contributions cancel within group
 
 
+def test_forward_shap_values_table_and_saved_artifact(forward_items):
+    table = ex.forward_shap_values_table(forward_items)
+    saved = pd.read_csv(tr.REPORTS_DIR / ex.FORWARD_SHAP_VALUES_FILE)
+    pd.testing.assert_frame_equal(saved, table, check_exact=False, rtol=1e-12)  # artifact is current
+    fwd = pd.read_csv(tr.REPORTS_DIR / "forward_predictions.csv").set_index("shipment_id")
+    blocks = table.groupby(["shipment_id", "model"])
+    assert blocks.ngroups == 126 * 2
+    for (sid, model), g in blocks:
+        feats, groups = g[g.level == "feature"], g[g.level == "group"]
+        base, pred = g["shap_base_value_h"].iloc[0], g["predicted_downstream_delay_h"].iloc[0]
+        assert abs(base + feats["contribution_h"].sum() - pred) < 1e-6
+        assert abs(groups["contribution_h"].sum() - feats["contribution_h"].sum()) < 1e-9
+        assert set(groups["name"]) == set(ex.GROUPS)
+        assert pred == pytest.approx(fwd.loc[sid, f"pred_downstream_{model}"], abs=1e-9)
+        assert int(g["fold"].iloc[0]) == int(fwd.loc[sid, "fold"])
+
+
 def test_group_importance_is_net_and_bounded_by_feature_sum(forward_items):
     """Group value = mean(|sum SHAP in group|) <= sum of the features' mean(|SHAP|) (triangle inequality)."""
     feat, group = ex.forward_importance_report(forward_items)
